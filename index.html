@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦜 Игры Бразилии — День Кино</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Nunito', 'Arial Rounded MT Bold', Arial, sans-serif; overflow-x: hidden; }
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+  :root {
+    --green: #1A7A35; --dgreen: #0D5C22;
+    --yellow: #F5C518; --blue: #1565C0;
+    --orange: #E8621A; --pink: #E84393;
+    --purple: #9C27B0; --white: #ffffff;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ── BACK BTN ── */
+  .back-btn {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    background: rgba(255,255,255,0.25); border: 2px solid white;
+    color: white; border-radius: 999px; padding: 8px 20px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    backdrop-filter: blur(6px); transition: transform .15s;
+  }
+  .back-btn:hover { transform: scale(1.06); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes wobble { 0%,100%{transform:rotate(-6deg)} 50%{transform:rotate(6deg)} }
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+  @keyframes popIn  { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.12)} 100%{transform:scale(1);opacity:1} }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  @keyframes fall   { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+  @keyframes pulse  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+  @keyframes spin   { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes starPop{ 0%{transform:scale(0)} 70%{transform:scale(1.4)} 100%{transform:scale(1)} }
+  @keyframes slideUp{ 0%{transform:translateY(30px);opacity:0} 100%{transform:translateY(0);opacity:1} }
+  @keyframes shimmer{ 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+  @keyframes heartbeat { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+
+  /* ── CONFETTI ── */
+  .confetti-piece {
+    position: fixed; top: -20px; border-radius: 2px;
+    animation: fall 2.5s ease-in forwards; pointer-events: none; z-index: 999;
+  }
+
+  /* ══════════════════════════════════════════
+     MENU
+  ══════════════════════════════════════════ */
+  #menu {
+    background: linear-gradient(160deg, #006400 0%, #1A7A35 45%, #0D5C22 100%);
+    padding: 28px 16px;
+    position: relative; overflow: hidden;
+  }
+  .menu-bg-circle {
+    position: absolute; border-radius: 50%; background: rgba(255,255,255,0.06);
+  }
+  .menu-title { text-align: center; margin-bottom: 32px; position: relative; }
+  .menu-parrot { font-size: 58px; display: block; animation: wobble 2.2s ease-in-out infinite; }
+  .menu-heading { font-size: 38px; font-weight: 900; color: var(--yellow);
+    letter-spacing: 2px; text-shadow: 0 3px 0 rgba(0,0,0,.3); margin: 6px 0 4px; }
+  .menu-sub { font-size: 15px; color: rgba(255,255,255,.75); }
+
+  .games-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 540px; width: 100%; }
+  .game-card {
+    border-radius: 22px; padding: 22px 14px; cursor: pointer; text-align: center;
+    border-width: 3px; border-style: solid;
+    box-shadow: 0 6px 24px rgba(0,0,0,.22); transition: transform .18s, box-shadow .18s;
+    position: relative; overflow: hidden;
+  }
+  .game-card:hover { transform: scale(1.07) translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.3); }
+  .game-card:active { transform: scale(.97); }
+  .game-card-emoji { font-size: 46px; display: block; margin-bottom: 10px; transition: transform .18s; }
+  .game-card:hover .game-card-emoji { animation: bounce .4s infinite alternate; }
+  .game-card-title { font-size: 16px; font-weight: 900; line-height: 1.2; }
+  .game-card-sub { font-size: 11px; color: #555; margin-top: 5px; }
+  .menu-hint { margin-top: 26px; color: rgba(255,255,255,.45); font-size: 12px; }
+
+  /* ══════════════════════════════════════════
+     GAME 1 – ANIMALS
+  ══════════════════════════════════════════ */
+  #animals { background: linear-gradient(135deg, #0D5C22, #1A7A35, #145A32); padding: 70px 16px 28px; }
+  .animals-header { text-align: center; margin-bottom: 22px; }
+  .animals-title { font-size: 30px; font-weight: 900; color: var(--yellow); }
+  .animals-score { font-size: 22px; font-weight: 900; color: var(--yellow); margin-top: 8px; }
+  .animals-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; max-width: 560px; width: 100%; }
+
+  .flip-card { perspective: 700px; cursor: pointer; }
+  .flip-card-inner {
+    position: relative; transform-style: preserve-3d;
+    transition: transform .55s cubic-bezier(.4,0,.2,1); height: 120px;
+  }
+  .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+  .flip-card-front, .flip-card-back {
+    position: absolute; inset: 0; backface-visibility: hidden;
+    border-radius: 16px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 8px;
+  }
+  .flip-card-front {
+    background: rgba(255,255,255,.15);
+    border: 2px solid rgba(255,255,255,.3);
+    box-shadow: 0 4px 14px rgba(0,0,0,.2);
+  }
+  .flip-card-front span { font-size: 36px; }
+  .flip-card-front small { font-size: 10px; color: rgba(255,255,255,.6); margin-top: 4px; }
+  .flip-card-back {
+    background: white; transform: rotateY(180deg);
+    border-width: 3px; border-style: solid;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  }
+  .flip-card-back .animal-emoji { font-size: 36px; }
+  .flip-card-back .animal-name { font-size: 11px; font-weight: 900; margin-top: 4px; line-height: 1.2; text-align: center; }
+  .flip-card-back .animal-fact { font-size: 8.5px; color: #555; margin-top: 3px; line-height: 1.3; text-align: center; }
+
+  /* ══════════════════════════════════════════
+     GAME 2 – QUIZ
+  ══════════════════════════════════════════ */
+  #quiz { background: linear-gradient(135deg, #0D2B6E, #1565C0, #0D47A1); padding: 70px 16px 28px; }
+  .quiz-progress { display: flex; gap: 6px; max-width: 480px; width: 100%; margin-bottom: 20px; }
+  .quiz-prog-bar { flex: 1; height: 7px; border-radius: 999px; background: rgba(255,255,255,.22); transition: background .4s; }
+  .quiz-prog-bar.done { background: var(--yellow); }
+  .quiz-prog-bar.current { background: rgba(255,255,255,.8); }
+
+  .quiz-card {
+    background: rgba(255,255,255,.13); border-radius: 24px;
+    padding: 26px 22px; max-width: 480px; width: 100%;
+    backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.2); margin-bottom: 16px;
+    text-align: center;
+  }
+  .quiz-emoji { font-size: 52px; display: block; margin-bottom: 14px; }
+  .quiz-question { font-size: 21px; font-weight: 900; color: white; line-height: 1.3; }
+  .quiz-counter { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 7px; }
+
+  .quiz-options { display: flex; flex-direction: column; gap: 10px; max-width: 480px; width: 100%; }
+  .quiz-opt {
+    background: rgba(255,255,255,.15); border: 2px solid rgba(255,255,255,.3);
+    color: white; border-radius: 14px; padding: 15px 20px;
+    font-size: 17px; font-weight: 700; cursor: pointer;
+    text-align: left; display: flex; align-items: center; gap: 12px;
+    transition: all .25s; width: 100%;
+  }
+  .quiz-opt:hover:not(.locked) { background: rgba(255,255,255,.25); transform: translateX(4px); }
+  .quiz-opt.correct  { background: #1A7A35 !important; border-color: var(--yellow) !important; }
+  .quiz-opt.wrong    { background: #C62828 !important; border-color: transparent !important; }
+  .quiz-opt.faded    { background: rgba(255,255,255,.05) !important; color: rgba(255,255,255,.35) !important; }
+  .quiz-opt .opt-badge { font-size: 22px; min-width: 30px; }
+  .quiz-opt .opt-check { margin-left: auto; font-size: 18px; }
+
+  .quiz-feedback {
+    max-width: 480px; width: 100%; background: rgba(255,255,255,.15);
+    border-radius: 16px; padding: 13px; text-align: center;
+    color: white; font-size: 15px; margin: 14px 0 12px; animation: popIn .3s both;
+  }
+  .quiz-next-btn {
+    background: var(--yellow); color: #1A1A2E; border: none;
+    border-radius: 999px; padding: 15px 40px; font-size: 18px;
+    font-weight: 900; cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,.25);
+    transition: transform .15s; animation: popIn .35s both;
+  }
+  .quiz-next-btn:hover { transform: scale(1.06); }
+
+  .quiz-result {
+    background: white; border-radius: 26px; padding: 36px 44px;
+    text-align: center; max-width: 420px; width: 100%;
+    box-shadow: 0 14px 44px rgba(0,0,0,.3); animation: popIn .4s both;
+  }
+  .quiz-result-emoji { font-size: 54px; }
+  .quiz-result-score { font-size: 30px; font-weight: 900; color: var(--blue); margin: 10px 0 6px; }
+  .quiz-result-msg { color: #555; font-size: 15px; }
+  .quiz-replay-btn {
+    margin-top: 20px; background: var(--blue); color: white;
+    border: none; border-radius: 999px; padding: 13px 30px;
+    font-size: 16px; font-weight: 700; cursor: pointer; transition: transform .15s;
+  }
+  .quiz-replay-btn:hover { transform: scale(1.06); }
+
+  /* ══════════════════════════════════════════
+     GAME 3 – DANCE
+  ══════════════════════════════════════════ */
+  #dance { background: linear-gradient(135deg, #7B1A00, #E8621A, #F5A623); padding: 70px 16px 28px; }
+  .dance-intro { text-align: center; max-width: 400px; }
+  .dance-intro-emoji { font-size: 68px; display: block; animation: wobble 1.2s infinite; margin-bottom: 12px; }
+  .dance-intro-title { font-size: 32px; font-weight: 900; color: white; margin-bottom: 10px; }
+  .dance-intro-desc { color: rgba(255,255,255,.85); font-size: 17px; line-height: 1.6; margin-bottom: 28px; }
+  .dance-moves-list { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 24px; }
+  .dance-moves-chip {
+    background: rgba(255,255,255,.18); border-radius: 12px;
+    padding: 7px 13px; color: white; font-size: 13px;
+  }
+  .dance-start-btn {
+    background: var(--yellow); color: #1A1A2E; border: none;
+    border-radius: 999px; padding: 20px 52px; font-size: 22px;
+    font-weight: 900; cursor: pointer; box-shadow: 0 6px 22px rgba(0,0,0,.3);
+    animation: pulse 1.2s infinite; transition: transform .15s;
+  }
+  .dance-start-btn:hover { transform: scale(1.06); animation: none; }
+
+  .dance-move-card {
+    background: white; border-radius: 28px; padding: 34px 28px;
+    text-align: center; max-width: 400px; width: 100%;
+    box-shadow: 0 14px 44px rgba(0,0,0,.3); animation: popIn .3s both;
+  }
+  .dance-move-emoji { font-size: 86px; display: block; line-height: 1; margin-bottom: 14px; }
+  .dance-move-name { font-size: 28px; font-weight: 900; margin-bottom: 10px; }
+  .dance-move-desc { font-size: 17px; color: #444; line-height: 1.6; }
+  .dance-timer-wrap { margin-top: 22px; display: flex; justify-content: center; }
+  .dance-step-label { font-size: 13px; color: rgba(255,255,255,.65); margin-bottom: 8px; text-align: center; }
+  .dance-after-btn {
+    background: var(--yellow); color: #1A1A2E; border: none;
+    border-radius: 999px; padding: 15px 38px; font-size: 18px;
+    font-weight: 900; cursor: pointer; margin-top: 18px;
+    animation: popIn .3s both; transition: transform .15s;
+  }
+  .dance-after-btn:hover { transform: scale(1.06); }
+  .dance-ok-label { color: white; font-size: 19px; font-weight: 700; margin-top: 16px; animation: popIn .3s both; }
+
+  /* ══════════════════════════════════════════
+     GAME 4 – COLORING
+  ══════════════════════════════════════════ */
+  #color { background: linear-gradient(135deg, #4A0030, #E84393, #C2185B); padding: 70px 16px 28px; }
+  .color-title { font-size: 28px; font-weight: 900; color: white; text-align: center; margin-bottom: 4px; }
+  .color-sub { color: rgba(255,255,255,.75); font-size: 14px; text-align: center; margin-bottom: 18px; }
+  .color-layout { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; justify-content: center; max-width: 640px; width: 100%; }
+  .color-svg-wrap {
+    background: rgba(255,255,255,.15); border-radius: 24px; padding: 18px;
+    backdrop-filter: blur(8px); border: 2px solid rgba(255,255,255,.3);
+  }
+  .color-svg-wrap svg path { cursor: pointer; transition: filter .15s; }
+  .color-svg-wrap svg path:hover { filter: brightness(1.15); }
+
+  .color-panel { display: flex; flex-direction: column; gap: 12px; min-width: 160px; }
+  .color-palette-box {
+    background: rgba(255,255,255,.18); border-radius: 18px; padding: 14px;
+  }
+  .color-palette-label { color: white; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+  .palette-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+  .pal-swatch {
+    width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+    border: 3px solid transparent; transition: transform .15s, border-color .15s;
+  }
+  .pal-swatch.active { border-color: white; transform: scale(1.22); box-shadow: 0 0 0 2px rgba(0,0,0,.35); }
+  .color-active-show {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.2); border-radius: 12px; padding: 7px 14px; margin-top: 12px;
+  }
+  .color-active-dot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; }
+  .color-active-label { color: white; font-size: 12px; font-weight: 700; }
+
+  .color-parts-box {
+    background: rgba(255,255,255,.18); border-radius: 18px; padding: 14px;
+  }
+  .color-parts-label { color: white; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .color-part-row {
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; padding: 3px 0; transition: opacity .2s;
+  }
+  .color-part-dot { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.5); flex-shrink: 0; }
+  .color-part-name { font-size: 12px; color: white; }
+  .color-part-check { font-size: 10px; margin-left: auto; }
+  .color-reset-btn {
+    background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.5);
+    color: white; border-radius: 14px; padding: 10px;
+    font-size: 14px; font-weight: 700; cursor: pointer; width: 100%;
+  }
+  .color-done-banner {
+    margin-top: 22px; background: white; border-radius: 20px;
+    padding: 22px 36px; text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,.3); animation: popIn .4s both;
+  }
+
+  /* ══════════════════════════════════════════
+     WIN / STARS
+  ══════════════════════════════════════════ */
+  .stars-row { display: flex; gap: 7px; justify-content: center; margin: 12px 0; }
+  .stars-row span { font-size: 30px; }
+  .result-win-emoji { font-size: 42px; }
+  .result-win-title { font-size: 24px; font-weight: 900; }
+  .result-win-sub { color: #666; margin-top: 6px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     MENU
+══════════════════════════════════════════ -->
+<div id="menu" class="screen active">
+  <div class="menu-bg-circle" style="width:320px;height:320px;top:-100px;left:-100px"></div>
+  <div class="menu-bg-circle" style="width:200px;height:200px;bottom:-60px;right:-60px"></div>
+  <div class="menu-bg-circle" style="width:140px;height:140px;top:30%;right:-40px"></div>
+
+  <div style="position:absolute;font-size:22px;opacity:.35;top:18%;left:7%;animation:float 3s ease-in-out infinite">🌺</div>
+  <div style="position:absolute;font-size:22px;opacity:.35;top:14%;right:8%;animation:float 3.5s ease-in-out infinite">🦋</div>
+  <div style="position:absolute;font-size:22px;opacity:.35;top:68%;left:6%;animation:float 4s ease-in-out infinite">🌿</div>
+  <div style="position:absolute;font-size:22px;opacity:.35;top:65%;right:6%;animation:float 2.8s ease-in-out infinite">⭐</div>
+
+  <div class="menu-title" style="margin-top:24px">
+    <span class="menu-parrot">🦜</span>
+    <div class="menu-heading">ИГРЫ БРАЗИЛИИ</div>
+    <div class="menu-sub">День кино · Тема: Рио 🎬</div>
+  </div>
+
+  <div class="games-grid">
+    <div class="game-card" style="background:#EAFBE7;border-color:#1A7A35" onclick="showScreen('animals')">
+      <span class="game-card-emoji">🦜</span>
+      <div class="game-card-title" style="color:#1A7A35">Угадай животное</div>
+      <div class="game-card-sub">Амазонские звери</div>
+    </div>
+    <div class="game-card" style="background:#E8F0FF;border-color:#1565C0" onclick="showScreen('quiz')">
+      <span class="game-card-emoji">🎬</span>
+      <div class="game-card-title" style="color:#1565C0">Викторина по Рио</div>
+      <div class="game-card-sub">Ты смотрел?</div>
+    </div>
+    <div class="game-card" style="background:#FFF0E8;border-color:#E8621A" onclick="showScreen('dance')">
+      <span class="game-card-emoji">💃</span>
+      <div class="game-card-title" style="color:#E8621A">Танец самбы</div>
+      <div class="game-card-sub">Повтори движение!</div>
+    </div>
+    <div class="game-card" style="background:#FFF0F8;border-color:#E84393" onclick="showScreen('color')">
+      <span class="game-card-emoji">🎨</span>
+      <div class="game-card-title" style="color:#E84393">Раскрась Голубчика</div>
+      <div class="game-card-sub">Попугай ждёт красок</div>
+    </div>
+  </div>
+  <div class="menu-hint">Нажми на карточку чтобы начать!</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     GAME 1 – ANIMALS
+══════════════════════════════════════════ -->
+<div id="animals" class="screen">
+  <button class="back-btn" onclick="showScreen('menu')">← Назад</button>
+  <div class="animals-header" style="margin-top:70px">
+    <div class="animals-title">🦜 Угадай животное!</div>
+    <div style="color:rgba(255,255,255,.75);font-size:14px;margin-top:5px">Нажми на карточку — узнай кто там прячется</div>
+    <div class="animals-score" id="animals-score">0 / 8 ⭐</div>
+  </div>
+  <div class="animals-grid" id="animals-grid"></div>
+  <div id="animals-win" style="display:none;margin-top:24px;animation:popIn .4s both">
+    <div style="background:white;border-radius:20px;padding:24px 36px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.3)">
+      <div style="font-size:44px">🎉</div>
+      <div style="font-size:24px;font-weight:900;color:#1A7A35;margin-top:6px">Молодец!</div>
+      <div style="color:#555;margin-top:4px">Все животные найдены!</div>
+      <div class="stars-row" id="animals-stars"></div>
+      <button style="margin-top:12px;background:#1A7A35;color:white;border:none;border-radius:999px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer" onclick="resetAnimals()">Играть снова</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     GAME 2 – QUIZ
+══════════════════════════════════════════ -->
+<div id="quiz" class="screen">
+  <button class="back-btn" onclick="showScreen('menu')">← Назад</button>
+  <div style="margin-top:70px;width:100%;max-width:480px;padding:0 16px;display:flex;flex-direction:column;align-items:center">
+    <div class="quiz-progress" id="quiz-progress"></div>
+    <div id="quiz-area"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     GAME 3 – DANCE
+══════════════════════════════════════════ -->
+<div id="dance" class="screen">
+  <button class="back-btn" onclick="showScreen('menu')">← Назад</button>
+  <div style="margin-top:70px;display:flex;flex-direction:column;align-items:center;width:100%;padding:0 16px">
+    <div id="dance-area"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     GAME 4 – COLORING
+══════════════════════════════════════════ -->
+<div id="color" class="screen">
+  <button class="back-btn" onclick="showScreen('menu')">← Назад</button>
+  <div style="margin-top:70px;width:100%;display:flex;flex-direction:column;align-items:center;padding:0 16px">
+    <div class="color-title">🎨 Раскрась Голубчика!</div>
+    <div class="color-sub">Выбери цвет — потом нажми на часть попугая</div>
+    <div class="color-layout">
+      <div class="color-svg-wrap">
+        <svg id="parrot-svg" width="290" height="370" viewBox="0 0 290 370"></svg>
+      </div>
+      <div class="color-panel">
+        <div class="color-palette-box">
+          <div class="color-palette-label">🎨 Выбери цвет:</div>
+          <div class="palette-grid" id="palette-grid"></div>
+          <div class="color-active-show">
+            <div class="color-active-dot" id="active-dot"></div>
+            <div class="color-active-label">Выбран</div>
+          </div>
+        </div>
+        <div class="color-parts-box">
+          <div class="color-parts-label">Части птицы:</div>
+          <div id="parts-list"></div>
+        </div>
+        <button class="color-reset-btn" onclick="resetColor()">🔄 Сначала</button>
+      </div>
+    </div>
+    <div id="color-done" style="display:none">
+      <div class="color-done-banner">
+        <div class="result-win-emoji">🎉</div>
+        <div class="result-win-title" style="color:#E84393">Голубчик готов!</div>
+        <div class="result-win-sub">Какой красивый попугай получился!</div>
+        <div class="stars-row" id="color-stars"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── AUDIO ──────────────────────────────────────────────────────────────────
+let _ac = null;
+function ac() { if (!_ac) _ac = new (window.AudioContext||window.webkitAudioContext)(); return _ac; }
+
+function playSound(type) {
+  try {
+    const ctx = ac();
+    const g = ctx.createGain(); g.connect(ctx.destination);
+    if (type === 'click') {
+      const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = 880;
+      o.connect(g); g.gain.setValueAtTime(0.1, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.08);
+      o.start(); o.stop(ctx.currentTime+0.1);
+    } else if (type === 'flip') {
+      const o = ctx.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(440, ctx.currentTime);
+      o.frequency.linearRampToValueAtTime(880, ctx.currentTime+0.12);
+      o.connect(g); g.gain.setValueAtTime(0.13, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.18);
+      o.start(); o.stop(ctx.currentTime+0.2);
+    } else if (type === 'correct') {
+      [523,659,784].forEach((f,i) => {
+        const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        const gg = ctx.createGain(); o.connect(gg); gg.connect(ctx.destination);
+        gg.gain.setValueAtTime(0.18, ctx.currentTime+i*.12);
+        gg.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+i*.12+.3);
+        o.start(ctx.currentTime+i*.12); o.stop(ctx.currentTime+i*.12+.35);
+      });
+    } else if (type === 'wrong') {
+      const o = ctx.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(220, ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(110, ctx.currentTime+.3);
+      o.connect(g); g.gain.setValueAtTime(0.14, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+.35);
+      o.start(); o.stop(ctx.currentTime+.4);
+    } else if (type === 'win') {
+      [523,659,784,1047].forEach((f,i) => {
+        const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        const gg = ctx.createGain(); o.connect(gg); gg.connect(ctx.destination);
+        gg.gain.setValueAtTime(0.2, ctx.currentTime+i*.1);
+        gg.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+i*.1+.45);
+        o.start(ctx.currentTime+i*.1); o.stop(ctx.currentTime+i*.1+.5);
+      });
+    } else if (type === 'beat') {
+      const buf = ctx.createBuffer(1, ctx.sampleRate*.08, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*.025));
+      const src = ctx.createBufferSource(); src.buffer = buf;
+      const f = ctx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=180;
+      src.connect(f); f.connect(g); g.gain.setValueAtTime(0.6, ctx.currentTime);
+      src.start();
+    }
+  } catch(e){}
+}
+
+// ── SCREEN ROUTING ─────────────────────────────────────────────────────────
+function showScreen(id) {
+  playSound('click');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if (id === 'animals') initAnimals();
+  if (id === 'quiz')    initQuiz();
+  if (id === 'dance')   initDance();
+  if (id === 'color')   initColor();
+}
+
+// ── CONFETTI ───────────────────────────────────────────────────────────────
+function confetti() {
+  const cols = ['#F5C518','#1A7A35','#1565C0','#E8621A','#E84393','#ffffff'];
+  for (let i=0;i<34;i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `left:${Math.random()*100}%;width:${8+Math.random()*10}px;height:${8+Math.random()*10}px;
+      background:${cols[i%cols.length]};border-radius:${Math.random()>.5?'50%':'2px'};
+      animation-delay:${Math.random()*1.4}s;animation-duration:${2+Math.random()}s;`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 4000);
+  }
+}
+
+function makeStars(containerId, count, total=5) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  for (let i=0;i<total;i++) {
+    const s = document.createElement('span');
+    s.textContent = i<count ? '⭐' : '☆';
+    s.style.cssText = `font-size:28px;animation:${i<count?`starPop .3s ${i*.1}s both`:'none'}`;
+    el.appendChild(s);
+  }
+}
+
+// ══════════════════════════════════════════
+// GAME 1 – ANIMALS
+// ══════════════════════════════════════════
+const ANIMALS = [
+  {emoji:'🦜', name:'Попугай Ара',  fact:'Умеет повторять слова человека!',      color:'#1565C0'},
+  {emoji:'🐒', name:'Обезьяна',     fact:'Живёт в джунглях и качается на лианах!', color:'#8B4513'},
+  {emoji:'🐆', name:'Ягуар',        fact:'Самая быстрая кошка Южной Америки!',   color:'#D4A017'},
+  {emoji:'🐊', name:'Кайман',       fact:'Родственник крокодила — живёт в реках!', color:'#2E7D32'},
+  {emoji:'🦥', name:'Ленивец',      fact:'Спит по 18 часов в сутки!',            color:'#795548'},
+  {emoji:'🦋', name:'Бабочка',      fact:'В Амазонии тысячи видов бабочек!',     color:'#7B1FA2'},
+  {emoji:'🐍', name:'Анаконда',     fact:'Одна из самых длинных змей — до 9 м!', color:'#388E3C'},
+  {emoji:'🦜', name:'Тукан',        fact:'Клюв длиннее, чем всё его тело!',      color:'#E65100'},
+];
+let animalsScore = 0;
+let animalsFlipped = new Array(8).fill(false);
+let animalsInited = false;
+
+function initAnimals() {
+  if (animalsInited) return;
+  animalsInited = true;
+  animalsScore = 0;
+  animalsFlipped = new Array(8).fill(false);
+  renderAnimalsGrid();
+}
+
+function renderAnimalsGrid() {
+  const grid = document.getElementById('animals-grid');
+  grid.innerHTML = '';
+  ANIMALS.forEach((a, i) => {
+    const card = document.createElement('div');
+    card.className = 'flip-card' + (animalsFlipped[i] ? ' flipped' : '');
+    card.id = 'acard-' + i;
+    card.innerHTML = `
+      <div class="flip-card-inner">
+        <div class="flip-card-front">
+          <span style="font-size:36px">❓</span>
+          <small>Нажми!</small>
+        </div>
+        <div class="flip-card-back" style="border-color:${a.color}">
+          <div class="animal-emoji">${a.emoji}</div>
+          <div class="animal-name" style="color:${a.color}">${a.name}</div>
+          <div class="animal-fact">${a.fact}</div>
+        </div>
+      </div>`;
+    if (!animalsFlipped[i]) card.onclick = () => flipAnimal(i);
+    grid.appendChild(card);
+  });
+  document.getElementById('animals-score').textContent = animalsScore + ' / 8 ⭐';
+}
+
+function flipAnimal(i) {
+  if (animalsFlipped[i]) return;
+  playSound('flip');
+  animalsFlipped[i] = true;
+  animalsScore++;
+  document.getElementById('acard-'+i).classList.add('flipped');
+  document.getElementById('acard-'+i).onclick = null;
+  document.getElementById('animals-score').textContent = animalsScore + ' / 8 ⭐';
+  if (animalsScore === 8) {
+    setTimeout(() => {
+      playSound('win'); confetti();
+      makeStars('animals-stars', 5);
+      document.getElementById('animals-win').style.display = 'block';
+    }, 500);
+  }
+}
+
+function resetAnimals() {
+  animalsInited = false;
+  document.getElementById('animals-win').style.display = 'none';
+  initAnimals();
+}
+
+// ══════════════════════════════════════════
+// GAME 2 – QUIZ
+// ══════════════════════════════════════════
+const QUESTIONS = [
+  { q:'Как зовут главного попугая в мультфильме?',
+    opts:['Голубчик','Перо','Рио','Зелёный'], ans:0, emoji:'🦜' },
+  { q:'В каком городе происходят приключения Голубчика?',
+    opts:['Москва','Рио-де-Жанейро','Лондон','Париж'], ans:1, emoji:'🌆' },
+  { q:'Чего Голубчик боялся в начале мультфильма?',
+    opts:['Темноты','Воды','Летать','Кошек'], ans:2, emoji:'😨' },
+  { q:'Как зовут девочку-попугая в фильме?',
+    opts:['Лола','Жемчужинка','Маша','Синди'], ans:1, emoji:'💙' },
+  { q:'Какой праздник проходит в Рио в мультфильме?',
+    opts:['Новый год','Карнавал','День рождения','Хэллоуин'], ans:1, emoji:'🎉' },
+];
+const BADGES = ['🅰','🅱','🅲','🅳'];
+let qIdx=0, qScore=0, qSelected=null, qLocked=false;
+
+function initQuiz() {
+  qIdx=0; qScore=0; qSelected=null; qLocked=false;
+  renderProgress();
+  renderQuestion();
+}
+
+function renderProgress() {
+  const p = document.getElementById('quiz-progress');
+  p.innerHTML = '';
+  QUESTIONS.forEach((_,i) => {
+    const d = document.createElement('div');
+    d.className='quiz-prog-bar' + (i<qIdx?' done':i===qIdx?' current':'');
+    p.appendChild(d);
+  });
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[qIdx];
+  const area = document.getElementById('quiz-area');
+  area.innerHTML = `
+    <div class="quiz-card">
+      <span class="quiz-emoji">${q.emoji}</span>
+      <div class="quiz-question">${q.q}</div>
+      <div class="quiz-counter">Вопрос ${qIdx+1} из ${QUESTIONS.length}</div>
+    </div>
+    <div class="quiz-options">
+      ${q.opts.map((o,i)=>`
+        <button class="quiz-opt" id="qopt-${i}" onclick="chooseAnswer(${i})">
+          <span class="opt-badge">${BADGES[i]}</span>${o}
+          <span class="opt-check" id="qcheck-${i}"></span>
+        </button>`).join('')}
+    </div>
+    <div id="quiz-feedback" style="display:none" class="quiz-feedback"></div>
+    <div id="quiz-next-wrap" style="display:none;text-align:center;margin-top:4px">
+      <button class="quiz-next-btn" onclick="nextQuestion()">
+        ${qIdx+1>=QUESTIONS.length?'Результат! 🏆':'Следующий →'}
+      </button>
+    </div>`;
+}
+
+function chooseAnswer(idx) {
+  if (qLocked) return;
+  qLocked = true;
+  const q = QUESTIONS[qIdx];
+  const correct = idx === q.ans;
+  playSound(correct ? 'correct' : 'wrong');
+  if (correct) qScore++;
+  QUESTIONS[qIdx].opts.forEach((_,i) => {
+    const btn = document.getElementById('qopt-'+i);
+    btn.classList.add('locked');
+    btn.onclick = null;
+    if (i===q.ans) { btn.classList.add('correct'); document.getElementById('qcheck-'+i).textContent='✅'; }
+    else if (i===idx && !correct) { btn.classList.add('wrong'); document.getElementById('qcheck-'+i).textContent='❌'; }
+    else btn.classList.add('faded');
+  });
+  const fb = document.getElementById('quiz-feedback');
+  fb.style.display = 'block';
+  fb.textContent = correct ? '✅ Правильно! Умница! 🌟' : `❌ Не совсем… Правильный ответ: «${q.opts[q.ans]}»`;
+  document.getElementById('quiz-next-wrap').style.display = 'block';
+}
+
+function nextQuestion() {
+  playSound('click');
+  qIdx++;
+  if (qIdx >= QUESTIONS.length) { showQuizResult(); return; }
+  qSelected=null; qLocked=false;
+  renderProgress();
+  renderQuestion();
+}
+
+function showQuizResult() {
+  const total = qScore;
+  const emoji = total===5?'🏆':total>=3?'🎉':'💪';
+  const msg = total===5?'Ты настоящий знаток Рио!':total>=3?'Отличный результат! Пересмотри фильм ещё раз 😊':'Ничего, посмотришь фильм — всё запомнишь!';
+  if (total>=4) { playSound('win'); confetti(); }
+  document.getElementById('quiz-area').innerHTML = `
+    <div class="quiz-result">
+      <div class="quiz-result-emoji">${emoji}</div>
+      <div class="quiz-result-score">${total}/5 правильно!</div>
+      <div class="quiz-result-msg">${msg}</div>
+      <div class="stars-row" id="quiz-stars"></div>
+      <button class="quiz-replay-btn" onclick="initQuiz()">Играть снова!</button>
+    </div>`;
+  makeStars('quiz-stars', total);
+}
+
+// ══════════════════════════════════════════
+// GAME 3 – DANCE
+// ══════════════════════════════════════════
+const MOVES = [
+  {emoji:'👐', name:'Руки-крылья',   desc:'Разведи руки в стороны как попугай — и помаши!',         color:'#E8621A'},
+  {emoji:'🦶', name:'Притоп-притоп', desc:'Притопни правой ногой, потом левой — и ещё раз!',        color:'#1A7A35'},
+  {emoji:'🙌', name:'Хлоп-хлоп',    desc:'Хлопни в ладоши над головой 3 раза — бум-бум-бум!',      color:'#1565C0'},
+  {emoji:'🌀', name:'Покружись',     desc:'Покружись на месте один раз — медленно, как перо!',       color:'#E84393'},
+  {emoji:'🤸', name:'Прыжок-Рио',   desc:'Подпрыгни и крикни вслух «РИО!» 🦜',                     color:'#F5C518'},
+];
+let danceStep = -1;
+let danceTimer = 0;
+let danceInterval = null;
+let danceBeat = null;
+let danceInited = false;
+
+function initDance() {
+  danceStep = -1;
+  danceInited = true;
+  clearInterval(danceInterval);
+  clearInterval(danceBeat);
+  renderDance();
+}
+
+function renderDance() {
+  const area = document.getElementById('dance-area');
+  if (danceStep === -1) {
+    area.innerHTML = `
+      <div class="dance-intro">
+        <span class="dance-intro-emoji">💃</span>
+        <div class="dance-intro-title">Танец самбы!</div>
+        <div class="dance-intro-desc">Следуй за движениями — у тебя 5 секунд на каждое!<br>Вставай — и поехали! 🎵</div>
+        <div class="dance-moves-list">
+          ${MOVES.map(m=>`<div class="dance-moves-chip">${m.emoji} ${m.name}</div>`).join('')}
+        </div>
+        <button class="dance-start-btn" onclick="startDanceMove(0)">🎵 НАЧАЛИ!</button>
+      </div>`;
+  } else if (danceStep < MOVES.length) {
+    const m = MOVES[danceStep];
+    area.innerHTML = `
+      <div class="dance-step-label">Движение ${danceStep+1} из ${MOVES.length}</div>
+      <div class="dance-move-card" style="border-top:6px solid ${m.color}">
+        <span class="dance-move-emoji" id="dance-emoji" style="animation:heartbeat .6s infinite">${m.emoji}</span>
+        <div class="dance-move-name" style="color:${m.color}">${m.name}</div>
+        <div class="dance-move-desc">${m.desc}</div>
+        <div class="dance-timer-wrap">
+          <svg width="80" height="80" id="dance-svg">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="#EEE" stroke-width="7"/>
+            <circle cx="40" cy="40" r="32" fill="none" stroke="${m.color}" stroke-width="7"
+              id="dance-arc" stroke-dasharray="${2*Math.PI*32} ${2*Math.PI*32}"
+              stroke-linecap="round" transform="rotate(-90 40 40)" style="transition:stroke-dasharray .9s linear"/>
+            <text x="40" y="47" text-anchor="middle" font-size="26" font-weight="bold" fill="${m.color}" id="dance-num">5</text>
+          </svg>
+        </div>
+        <div id="dance-after" style="display:none">
+          <div class="dance-ok-label">🌟 Отлично!</div>
+          <button class="dance-after-btn" style="background:${m.color}" onclick="${danceStep+1<MOVES.length?`startDanceMove(${danceStep+1})`:'endDance()'}">
+            ${danceStep+1<MOVES.length?'Следующее движение →':'Финиш! 🏆'}
+          </button>
+        </div>
+      </div>`;
+  } else {
+    playSound('win'); confetti();
+    area.innerHTML = `
+      <div style="text-align:center">
+        <div style="background:white;border-radius:24px;padding:34px 44px;box-shadow:0 12px 40px rgba(0,0,0,.3);animation:popIn .4s both">
+          <div style="font-size:52px">🕺💃🎊</div>
+          <div style="font-size:26px;font-weight:900;color:#E8621A;margin-top:10px">Ты настоящий танцор самбы!</div>
+          <div style="color:#555;margin-top:8px">Бразилия аплодирует! 👏👏👏</div>
+          <div class="stars-row" id="dance-stars"></div>
+          <button style="margin-top:16px;background:#E8621A;color:white;border:none;border-radius:999px;padding:13px 30px;font-size:16px;font-weight:700;cursor:pointer" onclick="initDance()">Танцевать снова!</button>
+        </div>
+      </div>`;
+    makeStars('dance-stars', 5);
+  }
+}
+
+function startDanceMove(step) {
+  playSound('click');
+  danceStep = step;
+  danceTimer = 5;
+  clearInterval(danceInterval);
+  clearInterval(danceBeat);
+  renderDance();
+  updateDanceArc();
+  danceBeat = setInterval(() => playSound('beat'), 600);
+  danceInterval = setInterval(() => {
+    danceTimer--;
+    updateDanceArc();
+    if (danceTimer <= 0) {
+      clearInterval(danceInterval);
+      clearInterval(danceBeat);
+      playSound('correct');
+      const af = document.getElementById('dance-after');
+      if (af) af.style.display = 'block';
+    }
+  }, 1000);
+}
+
+function updateDanceArc() {
+  const arc = document.getElementById('dance-arc');
+  const num = document.getElementById('dance-num');
+  if (!arc || !num) return;
+  const circ = 2*Math.PI*32;
+  arc.setAttribute('stroke-dasharray', `${circ*danceTimer/5} ${circ}`);
+  num.textContent = danceTimer;
+}
+
+function endDance() {
+  clearInterval(danceInterval); clearInterval(danceBeat);
+  danceStep = MOVES.length;
+  renderDance();
+}
+
+// ══════════════════════════════════════════
+// GAME 4 – COLORING
+// ══════════════════════════════════════════
+const PALETTE = [
+  '#1565C0','#42A5F5','#1A7A35','#66BB6A','#F5C518','#FFA726',
+  '#E8621A','#E84393','#9C27B0','#FFFFFF','#1A1A2E','#8D6E63',
+];
+
+const PARTS = [
+  { id:'p-body',   label:'Тело',      def:'#1565C0',
+    d:'M 100 148 Q 58 118 53 182 Q 48 244 88 272 Q 128 296 160 284 Q 196 270 196 228 Q 196 168 160 143 Z' },
+  { id:'p-head',   label:'Голова',    def:'#1565C0',
+    d:'M 138 93 Q 98 78 88 114 Q 78 148 110 155 Q 140 160 164 140 Q 184 118 164 98 Z' },
+  { id:'p-wing',   label:'Крыло',     def:'#1A7A35',
+    d:'M 192 163 Q 232 128 256 153 Q 276 178 266 218 Q 252 254 210 240 Q 188 218 192 194 Z' },
+  { id:'p-belly',  label:'Живот',     def:'#90CAF9',
+    d:'M 108 184 Q 88 200 90 242 Q 92 272 130 276 Q 160 278 164 254 Q 168 224 154 198 Z' },
+  { id:'p-tail1',  label:'Хвост (1)', def:'#E8621A',
+    d:'M 78 264 Q 48 280 38 310 Q 33 336 64 330 Q 90 324 100 294 Q 105 274 88 266 Z' },
+  { id:'p-tail2',  label:'Хвост (2)', def:'#F5C518',
+    d:'M 94 268 Q 74 290 78 320 Q 84 346 110 340 Q 130 334 124 304 Q 118 278 102 270 Z' },
+  { id:'p-tail3',  label:'Хвост (3)', def:'#9C27B0',
+    d:'M 106 270 Q 98 300 108 330 Q 118 356 140 348 Q 160 340 152 310 Q 144 284 118 274 Z' },
+  { id:'p-beak',   label:'Клюв',      def:'#F5C518',
+    d:'M 83 116 Q 62 110 52 130 Q 47 146 68 149 Q 87 151 90 132 Z' },
+];
+
+let activeColor = PALETTE[0];
+let partColors = {};
+let paintedParts = new Set();
+let colorInited = false;
+
+function initColor() {
+  if (colorInited) return;
+  colorInited = true;
+  activeColor = PALETTE[0];
+  partColors = {};
+  PARTS.forEach(p => partColors[p.id] = p.def);
+  paintedParts = new Set();
+  buildColorUI();
+}
+
+function buildColorUI() {
+  // Palette
+  const pg = document.getElementById('palette-grid');
+  pg.innerHTML = '';
+  PALETTE.forEach(col => {
+    const sw = document.createElement('div');
+    sw.className = 'pal-swatch' + (col===activeColor?' active':'');
+    sw.style.background = col;
+    sw.onclick = () => selectColor(col);
+    pg.appendChild(sw);
+  });
+  document.getElementById('active-dot').style.background = activeColor;
+
+  // Parts list
+  const pl = document.getElementById('parts-list');
+  pl.innerHTML = '';
+  PARTS.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'color-part-row';
+    row.id = 'partrow-'+p.id;
+    row.onclick = () => paintPart(p.id);
+    row.innerHTML = `
+      <div class="color-part-dot" id="pdot-${p.id}" style="background:${partColors[p.id]}"></div>
+      <div class="color-part-name">${p.label}</div>
+      <div class="color-part-check" id="pcheck-${p.id}">${paintedParts.has(p.id)?'✅':''}</div>`;
+    pl.appendChild(row);
+  });
+
+  // SVG
+  buildParrotSVG();
+}
+
+function buildParrotSVG() {
+  const svg = document.getElementById('parrot-svg');
+  svg.innerHTML = `
+    <!-- Branch -->
+    <rect x="14" y="306" width="262" height="12" rx="6" fill="#5D4037"/>
+    <rect x="64" y="292" width="10" height="28" rx="5" fill="#5D4037"/>
+    <rect x="166" y="292" width="10" height="28" rx="5" fill="#5D4037"/>
+    ${PARTS.map(p=>`
+      <path id="${p.id}" d="${p.d}" fill="${partColors[p.id]}"
+        stroke="rgba(0,0,0,0.22)" stroke-width="2"
+        style="cursor:pointer;transition:filter .14s"
+        onclick="paintPart('${p.id}')"
+        onmouseenter="this.style.filter='brightness(1.18)'"
+        onmouseleave="this.style.filter='none'"/>
+    `).join('')}
+    <!-- Eye -->
+    <circle cx="118" cy="114" r="10" fill="white" stroke="#333" stroke-width="1.5"/>
+    <circle cx="120" cy="114" r="5" fill="#1A1A2E"/>
+    <circle cx="122" cy="111" r="2" fill="white"/>
+    <!-- Toes left -->
+    <ellipse cx="70"  cy="314" rx="7" ry="4" fill="#5D4037"/>
+    <ellipse cx="84"  cy="314" rx="7" ry="4" fill="#5D4037"/>
+    <ellipse cx="98"  cy="314" rx="7" ry="4" fill="#5D4037"/>
+    <ellipse cx="112" cy="314" rx="7" ry="4" fill="#5D4037"/>
+    <!-- Toes right -->
+    <ellipse cx="174" cy="314" rx="7" ry="4" fill="#5D4037"/>
+    <ellipse cx="188" cy="314" rx="7" ry="4" fill="#5D4037"/>
+    <ellipse cx="202" cy="314" rx="7" ry="4" fill="#5D4037"/>
+    <ellipse cx="216" cy="314" rx="7" ry="4" fill="#5D4037"/>
+    <!-- Progress label -->
+    <text x="145" y="358" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.65)" font-family="sans-serif" id="svg-progress">${paintedParts.size}/${PARTS.length} раскрашено</text>
+  `;
+}
+
+function selectColor(col) {
+  activeColor = col;
+  document.querySelectorAll('.pal-swatch').forEach((sw,i) => {
+    sw.classList.toggle('active', PALETTE[i]===col);
+  });
+  document.getElementById('active-dot').style.background = col;
+  playSound('click');
+}
+
+function paintPart(id) {
+  playSound('click');
+  partColors[id] = activeColor;
+  paintedParts.add(id);
+  // update SVG path
+  const path = document.getElementById(id);
+  if (path) path.setAttribute('fill', activeColor);
+  // update progress text
+  const prog = document.getElementById('svg-progress');
+  if (prog) prog.textContent = paintedParts.size+'/'+PARTS.length+' раскрашено';
+  // update parts list dot
+  const dot = document.getElementById('pdot-'+id);
+  if (dot) dot.style.background = activeColor;
+  const chk = document.getElementById('pcheck-'+id);
+  if (chk) chk.textContent = '✅';
+  // done?
+  if (paintedParts.size >= PARTS.length) {
+    setTimeout(() => {
+      playSound('win'); confetti();
+      const done = document.getElementById('color-done');
+      done.style.display = 'block';
+      makeStars('color-stars', 5);
+    }, 300);
+  }
+}
+
+function resetColor() {
+  colorInited = false;
+  document.getElementById('color-done').style.display = 'none';
+  initColor();
+}
+</script>
+</body>
+</html>
